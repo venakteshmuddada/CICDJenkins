@@ -1,28 +1,35 @@
 pipeline {
   agent any
 
+  environment {
+    DOCKER_IMAGE = 'my-java-app'
+    CONTAINER_NAME = 'java-app-container'
+    PORT = '8080'
+  }
+
   stages {
     stage('Checkout') {
       steps {
-        git 'https://github.com/venakteshmuddada/CICDJenkins.git'
+        git branch: 'main', url: 'https://github.com/venakteshmuddada/CICDJenkins.git'
       }
     }
 
-    stage('Build') {
+    stage('Build with Maven') {
       steps {
-        echo 'Building app...'
-        sh 'echo Simulate Maven/Gradle/NPM Build'
+        echo 'Building Java app using Maven...'
+        sh 'mvn clean package'
       }
     }
 
     stage('Docker Build & Run') {
       steps {
         script {
+          echo 'Building Docker image and starting container...'
           sh '''
-            docker build -t my-app .
-            docker stop my-app || true
-            docker rm my-app || true
-            docker run -d -p 80:3000 --name my-app my-app
+            docker build -t $DOCKER_IMAGE .
+            docker stop $CONTAINER_NAME || true
+            docker rm $CONTAINER_NAME || true
+            docker run -d -p 80:$PORT --name $CONTAINER_NAME $DOCKER_IMAGE
           '''
         }
       }
